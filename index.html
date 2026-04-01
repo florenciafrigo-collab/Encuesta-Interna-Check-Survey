@@ -38,7 +38,7 @@
   .submit-btn:disabled { background: #999; cursor: wait; }
   .success-msg { display: none; text-align: center; padding: 40px; }
   .success-msg h2 { color: var(--meli-green); margin-bottom: 8px; }
-  .error-msg { color: var(--meli-blue); font-size: .9rem; margin-top: 8px; display: none; }
+  .error-msg { color: red; font-size: .9rem; margin-top: 8px; display: none; }
 
   @media (max-width: 540px) {
     .scale { grid-template-columns: 1fr; }
@@ -85,8 +85,8 @@
 
     <div class="section-title" style="background:#333;">COMENTARIOS</div>
     <div class="question-card">
-      <p>¿Tenés algún comentario, sugerencia o algo que quieras compartir?</p>
-      <textarea id="comentarios" rows="4" placeholder="Escribí tu comentario acá (opcional)..." style="width:100%;border:2px solid #ddd;border-radius:8px;padding:12px;font-family:inherit;font-size:.95rem;resize:vertical;"></textarea>
+      <p>¿Tenés algún comentario, sugerencia o algo que quieras compartir? <span style="color:red;">*</span></p>
+      <textarea id="comentarios" rows="4" placeholder="Escribí tu comentario acá..." style="width:100%;border:2px solid #ddd;border-radius:8px;padding:12px;font-family:inherit;font-size:.95rem;resize:vertical;" required></textarea>
     </div>
 
     <div class="submit-area">
@@ -102,9 +102,7 @@
 </div>
 
 <script>
-// ⚠️ PEGAR ACA la URL de tu Google Apps Script (ver instrucciones en google_apps_script.js)
-const API_URL = 'https://script.google.com/a/macros/mercadolibre.com/s/AKfycbzy3GUV831Qgj7ViAUZjyWQxAYOSK1mOchkPp50vJ9XPPX4nmioMnM8AbiXbV0AQjFKBA/exec';
-
+const FORMSPREE_URL = 'https://formspree.io/f/xdapdprz';
 const ALL_QS = ['e1','e2','e3','e4','e5','e6','e7','e8','e9','e10','x1','x2','x3','x4','x5','x6','x7'];
 
 const SCALE_LABELS = [
@@ -134,13 +132,15 @@ async function submitSurvey() {
     else response[id] = parseInt(sel.value);
   });
 
+  const comentario = document.getElementById('comentarios').value.trim();
+  if (!comentario) missing = true;
+
   if (missing) {
-    alert('Por favor respondé todas las preguntas antes de enviar.');
+    alert('Por favor completá todas las preguntas y el comentario antes de enviar.');
     return;
   }
 
-  const comentario = document.getElementById('comentarios').value.trim();
-  if (comentario) response.comentario = comentario;
+  response.comentario = comentario;
 
   const btn = document.getElementById('submit-btn');
   const errorEl = document.getElementById('error-msg');
@@ -149,15 +149,18 @@ async function submitSurvey() {
   errorEl.style.display = 'none';
 
   try {
-    await fetch(API_URL, {
+    const res = await fetch(FORMSPREE_URL, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify(response)
     });
 
-    document.getElementById('survey-form').style.display = 'none';
-    document.getElementById('success-msg').style.display = 'block';
+    if (res.ok) {
+      document.getElementById('survey-form').style.display = 'none';
+      document.getElementById('success-msg').style.display = 'block';
+    } else {
+      throw new Error('Error del servidor');
+    }
   } catch (err) {
     btn.disabled = false;
     btn.textContent = 'Enviar respuestas';

@@ -51,15 +51,25 @@
   .dash-header h2 { font-size: 1.4rem; }
   .dash-header .resp-count { color: #666; margin-top: 4px; }
 
-  .actions-row { display: flex; gap: 12px; justify-content: center; }
+  .actions-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
   .actions-row button { padding: 8px 20px; border-radius: 6px; border: 2px solid var(--meli-dark); background: #fff; font-weight: 600; cursor: pointer; font-size: .85rem; transition: all .2s; }
   .actions-row button:hover { background: var(--meli-dark); color: #fff; }
 
+  .import-section { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,.08); text-align: center; }
+  .import-section h3 { margin-bottom: 12px; }
+  .import-section textarea { width: 100%; height: 120px; border: 2px solid #ddd; border-radius: 8px; padding: 12px; font-family: monospace; font-size: .85rem; resize: vertical; margin-bottom: 12px; }
+  .import-btn { background: var(--meli-blue); color: #fff; border: none; padding: 10px 32px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: .95rem; }
+  .import-btn:hover { background: #2968c8; }
+  .import-help { font-size: .82rem; color: #666; margin-bottom: 12px; line-height: 1.5; text-align: left; }
+
   .comment-card { background: var(--meli-light); padding: 12px; border-radius: 8px; margin-bottom: 8px; font-size: .9rem; line-height: 1.4; border-left: 4px solid var(--meli-blue); }
 
-  .loading { text-align: center; padding: 60px 20px; color: #999; }
-  .no-data { text-align: center; padding: 60px 20px; color: #999; }
+  .no-data { text-align: center; padding: 40px 20px; color: #999; }
   .no-data h3 { margin-bottom: 8px; }
+
+  .status-msg { font-size: .85rem; margin-top: 8px; }
+  .status-ok { color: var(--meli-green); }
+  .status-err { color: var(--meli-red); }
 
   @media (max-width: 700px) {
     .kpi-grid { grid-template-columns: 1fr; }
@@ -74,12 +84,24 @@
 <nav><h1>Dashboard - Engagement & EXE</h1></nav>
 
 <div class="dashboard" id="dash-content">
-  <div class="loading">Cargando respuestas...</div>
+  <div class="import-section">
+    <h3>Cargar respuestas</h3>
+    <div class="import-help">
+      <strong>Paso 1:</strong> Andá a <a href="https://formspree.io/forms" target="_blank">formspree.io/forms</a> > abrí tu form > <strong>Submissions</strong><br>
+      <strong>Paso 2:</strong> Click en <strong>Export</strong> > <strong>JSON</strong><br>
+      <strong>Paso 3:</strong> Abrí el archivo descargado con cualquier editor de texto, copiá todo (Ctrl+A, Ctrl+C) y pegalo acá:
+    </div>
+    <textarea id="json-input" placeholder="Pegá el JSON exportado de Formspree acá..."></textarea>
+    <br>
+    <button class="import-btn" onclick="loadFromJSON()">Cargar datos</button>
+    <div id="status-msg" class="status-msg"></div>
+    <div style="margin-top:8px;font-size:.8rem;color:#666;">Los datos quedan guardados en tu navegador. No hace falta pegarlos cada vez que abrís.</div>
+  </div>
+  <div id="dashboard-area"></div>
 </div>
 
 <script>
-// ⚠️ PEGAR ACA la misma URL de tu Google Apps Script
-const API_URL = 'https://script.google.com/a/macros/mercadolibre.com/s/AKfycbzy3GUV831Qgj7ViAUZjyWQxAYOSK1mOchkPp50vJ9XPPX4nmioMnM8AbiXbV0AQjFKBA/exec';
+const STORAGE_KEY = 'dashboard_engagement_data';
 
 const QUESTIONS = {
   engagement: [
@@ -116,11 +138,41 @@ function colorForAvg(v) {
   return 'var(--meli-red)';
 }
 
+function loadFromJSON() {
+  const raw = document.getElementById('json-input').value.trim();
+  const statusEl = document.getElementById('status-msg');
+  if (!raw) { statusEl.className = 'status-msg status-err'; statusEl.textContent = 'Pegá el JSON primero.'; return; }
+
+  try {
+    let data = JSON.parse(raw);
+    if (data.submissions) data = data.submissions;
+    if (!Array.isArray(data)) throw new Error('No es un array');
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    statusEl.className = 'status-msg status-ok';
+    statusEl.textContent = data.length + ' respuesta' + (data.length > 1 ? 's' : '') + ' cargada' + (data.length > 1 ? 's' : '') + ' correctamente.';
+    renderDashboard(data);
+  } catch (err) {
+    statusEl.className = 'status-msg status-err';
+    statusEl.textContent = 'Error al leer el JSON: ' + err.message;
+  }
+}
+
+// Auto-cargar datos guardados
+const saved = localStorage.getItem(STORAGE_KEY);
+if (saved) {
+  try {
+    const data = JSON.parse(saved);
+    document.getElementById('json-input').placeholder = data.length + ' respuestas cargadas previamente. Pegá JSON nuevo para actualizar.';
+    renderDashboard(data);
+  } catch(e) {}
+}
+
 function renderDashboard(responses) {
-  const container = document.getElementById('dash-content');
+  const container = document.getElementById('dashboard-area');
 
   if (!responses.length) {
-    container.innerHTML = '<div class="no-data"><h3>Sin respuestas todavía</h3><p>Esperando que se completen encuestas.</p></div>';
+    container.innerHTML = '<div class="no-data"><h3>Sin respuestas</h3></div>';
     return;
   }
 
@@ -128,7 +180,7 @@ function renderDashboard(responses) {
 
   const qAvgs = {};
   allQs.forEach(q => {
-    const vals = responses.map(r => Number(r[q.id])).filter(v => v > 0);
+    const vals = responses.map(r => Number(r[q.id])).filter(v => v >= 1 && v <= 5);
     qAvgs[q.id] = avg(vals);
   });
 
@@ -191,7 +243,6 @@ function renderDashboard(responses) {
 
     <div class="actions-row">
       <button onclick="exportCSV()">Exportar CSV</button>
-      <button onclick="loadData()">Actualizar</button>
     </div>
 
     <div class="kpi-grid">
@@ -249,27 +300,13 @@ function renderDashboard(responses) {
   `;
 }
 
-let cachedResponses = [];
-
-async function loadData() {
-  const container = document.getElementById('dash-content');
-  container.innerHTML = '<div class="loading">Cargando respuestas...</div>';
-
-  try {
-    const res = await fetch(API_URL);
-    cachedResponses = await res.json();
-    renderDashboard(cachedResponses);
-  } catch (err) {
-    container.innerHTML = '<div class="no-data"><h3>Error al cargar datos</h3><p>' + err.message + '</p></div>';
-  }
-}
-
 function exportCSV() {
-  if (!cachedResponses.length) { alert('No hay datos para exportar.'); return; }
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) { alert('No hay datos cargados.'); return; }
+  const responses = JSON.parse(saved);
   const allQs = [...QUESTIONS.engagement, ...QUESTIONS.exe];
-  const header = ['timestamp', ...allQs.map(q => q.id), 'comentario'].join(',');
-  const rows = cachedResponses.map(r => [
-    r.timestamp || '',
+  const header = [...allQs.map(q => q.id), 'comentario'].join(',');
+  const rows = responses.map(r => [
     ...allQs.map(q => r[q.id] || ''),
     `"${(r.comentario||'').toString().replace(/"/g,'""')}"`
   ].join(','));
@@ -280,8 +317,6 @@ function exportCSV() {
   a.href = url; a.download = 'encuesta_resultados.csv'; a.click();
   URL.revokeObjectURL(url);
 }
-
-loadData();
 </script>
 </body>
 </html>
