@@ -38,7 +38,6 @@
   .submit-btn:disabled { background: #999; cursor: wait; }
   .success-msg { display: none; text-align: center; padding: 40px; }
   .success-msg h2 { color: var(--meli-green); margin-bottom: 8px; }
-  .error-msg { color: red; font-size: .9rem; margin-top: 8px; display: none; }
 
   @media (max-width: 540px) {
     .scale { grid-template-columns: 1fr; }
@@ -86,12 +85,11 @@
     <div class="section-title" style="background:#333;">COMENTARIOS</div>
     <div class="question-card">
       <p>¿Tenés algún comentario, sugerencia o algo que quieras compartir? <span style="color:red;">*</span></p>
-      <textarea id="comentarios" rows="4" placeholder="Escribí tu comentario acá..." style="width:100%;border:2px solid #ddd;border-radius:8px;padding:12px;font-family:inherit;font-size:.95rem;resize:vertical;" required></textarea>
+      <textarea id="comentarios" rows="4" placeholder="Escribí tu comentario acá..." style="width:100%;border:2px solid #ddd;border-radius:8px;padding:12px;font-family:inherit;font-size:.95rem;resize:vertical;"></textarea>
     </div>
 
     <div class="submit-area">
       <button class="submit-btn" id="submit-btn" onclick="submitSurvey()">Enviar respuestas</button>
-      <div class="error-msg" id="error-msg"></div>
     </div>
   </div>
 
@@ -101,8 +99,32 @@
   </div>
 </div>
 
+<iframe name="hidden_iframe" style="display:none;"></iframe>
+
 <script>
-const FORMSPREE_URL = 'https://formspree.io/f/xdapdprz';
+const FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSe2uMDGWrE_OIrurrNaRQKK3-14ylmgeLhlEeTEAy172ki0uA/formResponse';
+
+const ENTRY_MAP = {
+  e1:  'entry.710497824',
+  e2:  'entry.1269125098',
+  e3:  'entry.936038424',
+  e4:  'entry.57001144',
+  e5:  'entry.1015767036',
+  e6:  'entry.497435027',
+  e7:  'entry.1322768341',
+  e8:  'entry.1937219155',
+  e9:  'entry.969469841',
+  e10: 'entry.1658372686',
+  x1:  'entry.357674614',
+  x2:  'entry.1944288980',
+  x3:  'entry.1323686874',
+  x4:  'entry.1544583960',
+  x5:  'entry.835938642',
+  x6:  'entry.933555779',
+  x7:  'entry.1946995918',
+  comentario: 'entry.907135431'
+};
+
 const ALL_QS = ['e1','e2','e3','e4','e5','e6','e7','e8','e9','e10','x1','x2','x3','x4','x5','x6','x7'];
 
 const SCALE_LABELS = [
@@ -122,14 +144,14 @@ document.querySelectorAll('.scale').forEach(el => {
   });
 });
 
-async function submitSurvey() {
-  const response = {};
+function submitSurvey() {
+  const data = {};
   let missing = false;
 
   ALL_QS.forEach(id => {
     const sel = document.querySelector(`input[name="${id}"]:checked`);
     if (!sel) missing = true;
-    else response[id] = parseInt(sel.value);
+    else data[id] = sel.value;
   });
 
   const comentario = document.getElementById('comentarios').value.trim();
@@ -140,33 +162,28 @@ async function submitSurvey() {
     return;
   }
 
-  response.comentario = comentario;
+  data.comentario = comentario;
 
-  const btn = document.getElementById('submit-btn');
-  const errorEl = document.getElementById('error-msg');
-  btn.disabled = true;
-  btn.textContent = 'Enviando...';
-  errorEl.style.display = 'none';
+  // Build form and submit to Google Forms via hidden iframe
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = FORM_URL;
+  form.target = 'hidden_iframe';
 
-  try {
-    const res = await fetch(FORMSPREE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(response)
-    });
-
-    if (res.ok) {
-      document.getElementById('survey-form').style.display = 'none';
-      document.getElementById('success-msg').style.display = 'block';
-    } else {
-      throw new Error('Error del servidor');
-    }
-  } catch (err) {
-    btn.disabled = false;
-    btn.textContent = 'Enviar respuestas';
-    errorEl.textContent = 'Error al enviar. Intentá de nuevo.';
-    errorEl.style.display = 'block';
+  for (const [key, value] of Object.entries(data)) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = ENTRY_MAP[key];
+    input.value = value;
+    form.appendChild(input);
   }
+
+  document.body.appendChild(form);
+  form.submit();
+  document.body.removeChild(form);
+
+  document.getElementById('survey-form').style.display = 'none';
+  document.getElementById('success-msg').style.display = 'block';
 }
 </script>
 </body>
