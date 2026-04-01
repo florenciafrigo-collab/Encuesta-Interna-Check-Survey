@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encuesta Engagement & EXE</title>
+<style>
+  :root {
+    --meli-yellow: #FFE600;
+    --meli-blue: #3483FA;
+    --meli-dark: #333;
+    --meli-light: #f5f5f5;
+    --meli-green: #00a650;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', -apple-system, sans-serif; background: var(--meli-light); color: var(--meli-dark); }
+
+  nav { background: var(--meli-yellow); padding: 14px 24px; box-shadow: 0 2px 8px rgba(0,0,0,.1); position: sticky; top: 0; z-index: 100; }
+  nav h1 { font-size: 1.2rem; font-weight: 700; }
+
+  .container { display: grid; grid-template-columns: 1fr; max-width: 800px; margin: 24px auto; padding: 0 16px; gap: 12px; }
+  .section-title { background: var(--meli-blue); color: #fff; padding: 12px 20px; border-radius: 8px; margin-top: 12px; font-size: 1.1rem; }
+  .section-title.exe { background: var(--meli-yellow); color: var(--meli-dark); }
+  .question-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .question-card p { font-weight: 500; margin-bottom: 12px; line-height: 1.4; }
+  .question-desc { font-size: .82rem; color: #666; line-height: 1.4; margin-bottom: 12px; font-style: italic; }
+
+  .scale { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .scale label { text-align: center; }
+  .scale input[type="radio"] { display: none; }
+  .scale span { display: block; padding: 10px 4px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: all .2s; font-size: .85rem; }
+  .scale input:checked + span { background: var(--meli-blue); color: #fff; border-color: var(--meli-blue); }
+  .exe .scale input:checked + span { background: #d4a800; color: var(--meli-dark); border-color: #d4a800; }
+
+  .submit-area { text-align: center; margin: 20px 0; }
+  .submit-btn { background: var(--meli-blue); color: #fff; border: none; padding: 14px 48px; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .submit-btn:hover { background: #2968c8; transform: translateY(-1px); }
+  .submit-btn:disabled { background: #999; cursor: wait; }
+  .success-msg { display: none; text-align: center; padding: 40px; }
+  .success-msg h2 { color: var(--meli-green); margin-bottom: 8px; }
+  .error-msg { color: var(--meli-blue); font-size: .9rem; margin-top: 8px; display: none; }
+
+  @media (max-width: 540px) {
+    .scale { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<nav><h1>Encuesta Engagement & EXE</h1></nav>
+
+<div class="container">
+  <div id="survey-form" style="display:contents;">
+    <div class="question-card" style="border-left:4px solid var(--meli-blue);">
+      <p style="font-size:1.1rem;margin-bottom:10px;">Antes de empezar...</p>
+      <div style="font-size:.92rem;line-height:1.6;color:#444;">
+        Esta encuesta es nuestro <strong>termómetro interno</strong> para saber cómo venimos como equipo de cara a la Check Survey. No es una encuesta oficial: es una iniciativa propia para tomar el pulso antes y poder trabajar en lo que haga falta.<br><br>
+        Es <strong>100% anónima y confidencial</strong>. No se registra ningún dato que permita identificar quién respondió. Por eso te pedimos total sinceridad: cuanto más honestas sean las respuestas, mejor vamos a poder entender dónde estamos parados y hacia dónde enfocarnos.<br><br>
+        Completarla lleva menos de 5 minutos. Gracias por tu tiempo.
+      </div>
+    </div>
+
+    <div class="section-title">ENGAGEMENT</div>
+
+    <div class="question-card"><p>1. Siento orgullo de trabajar en MELI.</p><div class="question-desc">Esta afirmación mide el nivel de orgullo que los empleados sienten por ser parte de MELI. Un alto nivel de orgullo está relacionado con el sentido de pertenencia y la identificación con el propósito y el ADN MELI.</div><div class="scale" data-q="e1"></div></div>
+    <div class="question-card"><p>2. Mi líder está accesible para conversar sobre cualquier tema.</p><div class="question-desc">Esta afirmación mide el grado en que tu líder está disponible y es cercano para conversar con transparencia y apertura sobre cualquier tema.</div><div class="scale" data-q="e2"></div></div>
+    <div class="question-card"><p>3. En MELI encuentro oportunidades de aprender y emprender nuevos desafíos.</p><div class="question-desc">Esta afirmación mide el espacio que sientes que hay en MELI para encontrar oportunidades de aprender, de ampliar tus capacidades, de progresar y tener nuevos desafíos basados en el mérito.</div><div class="scale" data-q="e3"></div></div>
+    <div class="question-card"><p>4. Puedo organizar mis tiempos personales con flexibilidad.</p><div class="question-desc">Esta afirmación refleja tus posibilidades de administrar tu tiempo de forma tal que puedas ajustar necesidades y responsabilidades personales.</div><div class="scale" data-q="e4"></div></div>
+    <div class="question-card"><p>5. Mi líder acciona para elevar la vara del equipo.</p><div class="question-desc">Esta afirmación mide tu percepción acerca de la capacidad que tiene tu líder para tomar decisiones e implementar acciones que le sirvan al equipo para aumentar su desempeño impactando en los resultados.</div><div class="scale" data-q="e5"></div></div>
+    <div class="question-card"><p>6. Siento que mi líder valora mi contribución.</p><div class="question-desc">Esta afirmación mide si sientes que recibes de parte de tu líder, reconocimiento y valoración por tu gestión, logros, habilidades y aportes.</div><div class="scale" data-q="e6"></div></div>
+    <div class="question-card"><p>7. Mantengo conversaciones de feedback con mi líder de manera recurrente y efectiva.</p><div class="question-desc">Esta afirmación mide si sientes que tienes un espacio con tu líder para obtener orientación sobre la forma en la que estás realizando tu tarea.</div><div class="scale" data-q="e7"></div></div>
+    <div class="question-card"><p>8. Las oportunidades de asumir nuevos desafíos se otorgan en base al mérito.</p><div class="question-desc">Esta afirmación mide tu opinión acerca de las oportunidades que tienes para encarar nuevos proyectos o roles dependiendo de tus habilidades y esfuerzos, no de otros factores.</div><div class="scale" data-q="e8"></div></div>
+    <div class="question-card"><p>9. Me motiva el trabajo que realizo.</p><div class="question-desc">Esta afirmación mide la disposición a dar siempre más, reflejando el entusiasmo y la satisfacción personal por el trabajo que realizas.</div><div class="scale" data-q="e9"></div></div>
+    <div class="question-card"><p>10. En mi equipo trabajamos con intensidad y dedicación.</p><div class="question-desc">Esta afirmación mide la energía, el esfuerzo y el compromiso que hay en tu equipo para alcanzar los objetivos.</div><div class="scale" data-q="e10"></div></div>
+
+    <div class="section-title exe">EXE</div>
+
+    <div class="question-card exe"><p>1. Honramos los compromisos cumpliendo con lo prometido.</p><div class="question-desc">Esta afirmación mide la percepción acerca de si las personas hacemos lo que decimos que vamos a hacer, o comunicamos a tiempo los errores o demoras en la ejecución.</div><div class="scale" data-q="x1"></div></div>
+    <div class="question-card exe"><p>2. Logramos nuestros objetivos optimizando tiempo y recursos.</p><div class="question-desc">Esta afirmación mide tu opinión acerca de si usamos lo mejor posible nuestros recursos (personas, dinero, instalaciones, herramientas, etc) para lograr nuestros objetivos.</div><div class="scale" data-q="x2"></div></div>
+    <div class="question-card exe"><p>3. En mi equipo mantenemos las cosas simples.</p><div class="question-desc">Esta afirmación mide el grado en que en tu equipo buscan simplificar tareas y procesos, eliminando las redundancias y evitando los retrabajos.</div><div class="scale" data-q="x3"></div></div>
+    <div class="question-card exe"><p>4. Las reuniones son efectivas.</p><div class="question-desc">Esta afirmación mide el grado en que consideras que las reuniones empiezan y terminan a tiempo, tienen una agenda compartida anticipadamente y terminan con acuerdos claros.</div><div class="scale" data-q="x4"></div></div>
+    <div class="question-card exe"><p>5. Priorizamos y coordinamos efectivamente los proyectos e iniciativas.</p><div class="question-desc">Esta afirmación mide si sientes que se gestionan bien los esfuerzos del equipo y si hay una clara dirección sobre qué tareas son prioritarias.</div><div class="scale" data-q="x5"></div></div>
+    <div class="question-card exe"><p>6. Sabemos cuándo decidir para avanzar rápido (90%) y cuando tomarnos un tiempo más para decidir (10%).</p><div class="question-desc">Esta afirmación mide tu opinión acerca de si sabemos cuándo podemos tomar una decisión de forma ágil y con autonomía dado que el impacto es menor (90% entra en este tipo de decisiones) y cuándo necesitamos escalar la toma de una decisión dando más tiempo e involucrando otras miradas dado el fuerte impacto que esa decisión puede tener en nuestro ecosistema (10%).</div><div class="scale" data-q="x6"></div></div>
+    <div class="question-card exe"><p>7. En mi equipo aprovechamos AI para ganar productividad.</p><div class="question-desc">Esta afirmación mide tu percepción sobre la adopción y el uso de herramientas de inteligencia artificial en el equipo, y cómo estas contribuyen a optimizar, agilizar y alcanzar mejores resultados.</div><div class="scale" data-q="x7"></div></div>
+
+    <div class="section-title" style="background:#333;">COMENTARIOS</div>
+    <div class="question-card">
+      <p>¿Tenés algún comentario, sugerencia o algo que quieras compartir?</p>
+      <textarea id="comentarios" rows="4" placeholder="Escribí tu comentario acá (opcional)..." style="width:100%;border:2px solid #ddd;border-radius:8px;padding:12px;font-family:inherit;font-size:.95rem;resize:vertical;"></textarea>
+    </div>
+
+    <div class="submit-area">
+      <button class="submit-btn" id="submit-btn" onclick="submitSurvey()">Enviar respuestas</button>
+      <div class="error-msg" id="error-msg"></div>
+    </div>
+  </div>
+
+  <div class="success-msg" id="success-msg">
+    <h2>Respuestas enviadas correctamente</h2>
+    <p>Gracias por completar la encuesta.</p>
+  </div>
+</div>
+
+<script>
+// ⚠️ PEGAR ACA la URL de tu Google Apps Script (ver instrucciones en google_apps_script.js)
+const API_URL = 'PEGAR_URL_ACA';
+
+const ALL_QS = ['e1','e2','e3','e4','e5','e6','e7','e8','e9','e10','x1','x2','x3','x4','x5','x6','x7'];
+
+const SCALE_LABELS = [
+  {v:1, l:'1 - Muy en desacuerdo'},
+  {v:2, l:'2 - En desacuerdo'},
+  {v:3, l:'3 - Neutral'},
+  {v:4, l:'4 - De acuerdo'},
+  {v:5, l:'5 - Muy de acuerdo'}
+];
+
+document.querySelectorAll('.scale').forEach(el => {
+  const q = el.dataset.q;
+  SCALE_LABELS.forEach(s => {
+    const lbl = document.createElement('label');
+    lbl.innerHTML = `<input type="radio" name="${q}" value="${s.v}"><span>${s.l}</span>`;
+    el.appendChild(lbl);
+  });
+});
+
+async function submitSurvey() {
+  const response = {};
+  let missing = false;
+
+  ALL_QS.forEach(id => {
+    const sel = document.querySelector(`input[name="${id}"]:checked`);
+    if (!sel) missing = true;
+    else response[id] = parseInt(sel.value);
+  });
+
+  if (missing) {
+    alert('Por favor respondé todas las preguntas antes de enviar.');
+    return;
+  }
+
+  const comentario = document.getElementById('comentarios').value.trim();
+  if (comentario) response.comentario = comentario;
+
+  const btn = document.getElementById('submit-btn');
+  const errorEl = document.getElementById('error-msg');
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+  errorEl.style.display = 'none';
+
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(response)
+    });
+
+    document.getElementById('survey-form').style.display = 'none';
+    document.getElementById('success-msg').style.display = 'block';
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Enviar respuestas';
+    errorEl.textContent = 'Error al enviar. Intentá de nuevo.';
+    errorEl.style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>

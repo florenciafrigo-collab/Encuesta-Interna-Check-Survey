@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - Encuesta Engagement & EXE</title>
+<style>
+  :root {
+    --meli-yellow: #FFE600;
+    --meli-blue: #3483FA;
+    --meli-dark: #333;
+    --meli-light: #f5f5f5;
+    --meli-green: #00a650;
+    --meli-red: #f23d4f;
+    --meli-orange: #ff7733;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', -apple-system, sans-serif; background: var(--meli-light); color: var(--meli-dark); }
+
+  nav { background: var(--meli-yellow); padding: 14px 24px; box-shadow: 0 2px 8px rgba(0,0,0,.1); position: sticky; top: 0; z-index: 100; }
+  nav h1 { font-size: 1.2rem; font-weight: 700; }
+
+  .dashboard { display: grid; grid-template-columns: 1fr; max-width: 1100px; margin: 24px auto; padding: 0 16px; gap: 20px; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .kpi-card { background: #fff; border-radius: 12px; padding: 24px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  .kpi-card .value { font-size: 2.4rem; font-weight: 700; }
+  .kpi-card .label { font-size: .85rem; color: #666; margin-top: 4px; }
+  .kpi-card.engagement .value { color: var(--meli-blue); }
+  .kpi-card.exe .value { color: #d4a800; }
+  .kpi-card.general .value { color: var(--meli-green); }
+
+  .bars-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .chart-section { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  .chart-section h3 { margin-bottom: 16px; font-size: 1rem; }
+
+  .bar-row { display: grid; grid-template-columns: 45% 1fr; gap: 12px; align-items: center; margin-bottom: 10px; }
+  .bar-label { font-size: .82rem; line-height: 1.3; text-align: right; }
+  .bar-track { background: #eee; border-radius: 6px; height: 28px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 6px; transition: width .6s ease; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-size: .8rem; font-weight: 600; color: #fff; min-width: 36px; }
+
+  .topbottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .dist-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .dist-section { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+  .dist-section h3 { margin-bottom: 16px; font-size: 1rem; }
+  .dist-row { display: grid; grid-template-columns: 120px 1fr; gap: 4px; align-items: center; margin-bottom: 6px; }
+  .dist-label { font-size: .8rem; text-align: right; }
+  .dist-bar { height: 20px; border-radius: 4px; display: flex; align-items: center; padding-left: 6px; font-size: .75rem; color: #fff; font-weight: 600; min-width: 20px; }
+
+  .dash-header { text-align: center; }
+  .dash-header h2 { font-size: 1.4rem; }
+  .dash-header .resp-count { color: #666; margin-top: 4px; }
+
+  .actions-row { display: flex; gap: 12px; justify-content: center; }
+  .actions-row button { padding: 8px 20px; border-radius: 6px; border: 2px solid var(--meli-dark); background: #fff; font-weight: 600; cursor: pointer; font-size: .85rem; transition: all .2s; }
+  .actions-row button:hover { background: var(--meli-dark); color: #fff; }
+
+  .comment-card { background: var(--meli-light); padding: 12px; border-radius: 8px; margin-bottom: 8px; font-size: .9rem; line-height: 1.4; border-left: 4px solid var(--meli-blue); }
+
+  .loading { text-align: center; padding: 60px 20px; color: #999; }
+  .no-data { text-align: center; padding: 60px 20px; color: #999; }
+  .no-data h3 { margin-bottom: 8px; }
+
+  @media (max-width: 700px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+    .bars-grid, .topbottom-grid, .dist-grid { grid-template-columns: 1fr; }
+    .bar-row { grid-template-columns: 35% 1fr; }
+    .kpi-card .value { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav><h1>Dashboard - Engagement & EXE</h1></nav>
+
+<div class="dashboard" id="dash-content">
+  <div class="loading">Cargando respuestas...</div>
+</div>
+
+<script>
+// ⚠️ PEGAR ACA la misma URL de tu Google Apps Script
+const API_URL = 'PEGAR_URL_ACA';
+
+const QUESTIONS = {
+  engagement: [
+    {id:'e1', text:'Siento orgullo de trabajar en MELI'},
+    {id:'e2', text:'Mi líder está accesible para conversar'},
+    {id:'e3', text:'Encuentro oportunidades de aprender'},
+    {id:'e4', text:'Puedo organizar mis tiempos con flexibilidad'},
+    {id:'e5', text:'Mi líder acciona para elevar la vara'},
+    {id:'e6', text:'Mi líder valora mi contribución'},
+    {id:'e7', text:'Conversaciones de feedback recurrentes'},
+    {id:'e8', text:'Oportunidades en base al mérito'},
+    {id:'e9', text:'Me motiva el trabajo que realizo'},
+    {id:'e10', text:'Trabajamos con intensidad y dedicación'}
+  ],
+  exe: [
+    {id:'x1', text:'Honramos los compromisos'},
+    {id:'x2', text:'Objetivos optimizando tiempo y recursos'},
+    {id:'x3', text:'Mantenemos las cosas simples'},
+    {id:'x4', text:'Las reuniones son efectivas'},
+    {id:'x5', text:'Priorizamos y coordinamos efectivamente'},
+    {id:'x6', text:'Sabemos cuándo decidir rápido (90/10)'},
+    {id:'x7', text:'Aprovechamos AI para productividad'}
+  ]
+};
+
+function avg(arr) {
+  if (!arr.length) return 0;
+  return arr.reduce((a,b) => a+b, 0) / arr.length;
+}
+
+function colorForAvg(v) {
+  if (v >= 4) return 'var(--meli-green)';
+  if (v >= 3) return 'var(--meli-orange)';
+  return 'var(--meli-red)';
+}
+
+function renderDashboard(responses) {
+  const container = document.getElementById('dash-content');
+
+  if (!responses.length) {
+    container.innerHTML = '<div class="no-data"><h3>Sin respuestas todavía</h3><p>Esperando que se completen encuestas.</p></div>';
+    return;
+  }
+
+  const allQs = [...QUESTIONS.engagement, ...QUESTIONS.exe];
+
+  const qAvgs = {};
+  allQs.forEach(q => {
+    const vals = responses.map(r => Number(r[q.id])).filter(v => v > 0);
+    qAvgs[q.id] = avg(vals);
+  });
+
+  const engAvg = avg(QUESTIONS.engagement.map(q => qAvgs[q.id]));
+  const exeAvg = avg(QUESTIONS.exe.map(q => qAvgs[q.id]));
+  const generalAvg = avg(allQs.map(q => qAvgs[q.id]));
+
+  function getDistribution(ids) {
+    const dist = {1:0, 2:0, 3:0, 4:0, 5:0};
+    let total = 0;
+    ids.forEach(id => {
+      responses.forEach(r => {
+        const v = Number(r[id]);
+        if (v >= 1 && v <= 5) { dist[v]++; total++; }
+      });
+    });
+    return {dist, total};
+  }
+
+  const engDist = getDistribution(QUESTIONS.engagement.map(q=>q.id));
+  const exeDist = getDistribution(QUESTIONS.exe.map(q=>q.id));
+
+  function barRows(questions) {
+    return questions.map(q => {
+      const v = qAvgs[q.id];
+      const pct = (v / 5 * 100).toFixed(0);
+      return `<div class="bar-row">
+        <div class="bar-label">${q.text}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${pct}%;background:${colorForAvg(v)}">${v.toFixed(2)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function distBars(data) {
+    const labels = {1:'Muy en desacuerdo',2:'En desacuerdo',3:'Neutral',4:'De acuerdo',5:'Muy de acuerdo'};
+    const colors = {1:'var(--meli-red)',2:'var(--meli-orange)',3:'#aaa',4:'var(--meli-blue)',5:'var(--meli-green)'};
+    return [1,2,3,4,5].map(v => {
+      const count = data.dist[v];
+      const pct = data.total ? (count/data.total*100) : 0;
+      return `<div class="dist-row">
+        <div class="dist-label">${labels[v]}</div>
+        <div class="dist-bar" style="width:${Math.max(pct,2)}%;background:${colors[v]}">${pct.toFixed(0)}%</div>
+      </div>`;
+    }).join('');
+  }
+
+  const sorted = allQs.map(q => ({...q, avg: qAvgs[q.id]})).sort((a,b) => b.avg - a.avg);
+  const top3 = sorted.slice(0,3);
+  const bottom3 = sorted.slice(-3).reverse();
+
+  const comentarios = responses.map(r => r.comentario).filter(c => c && c.toString().trim());
+
+  container.innerHTML = `
+    <div class="dash-header">
+      <h2>Dashboard de Resultados</h2>
+      <div class="resp-count">${responses.length} respuesta${responses.length>1?'s':''} registrada${responses.length>1?'s':''}</div>
+    </div>
+
+    <div class="actions-row">
+      <button onclick="exportCSV()">Exportar CSV</button>
+      <button onclick="loadData()">Actualizar</button>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card engagement">
+        <div class="value">${engAvg.toFixed(2)}</div>
+        <div class="label">Promedio Engagement</div>
+      </div>
+      <div class="kpi-card exe">
+        <div class="value">${exeAvg.toFixed(2)}</div>
+        <div class="label">Promedio EXE</div>
+      </div>
+      <div class="kpi-card general">
+        <div class="value">${generalAvg.toFixed(2)}</div>
+        <div class="label">Promedio General</div>
+      </div>
+    </div>
+
+    <div class="bars-grid">
+      <div class="chart-section">
+        <h3>Engagement - Promedio por pregunta</h3>
+        ${barRows(QUESTIONS.engagement)}
+      </div>
+      <div class="chart-section">
+        <h3>EXE - Promedio por pregunta</h3>
+        ${barRows(QUESTIONS.exe)}
+      </div>
+    </div>
+
+    <div class="topbottom-grid">
+      <div class="chart-section">
+        <h3>Top 3 - Mejor puntuadas</h3>
+        ${top3.map(q => `<div style="margin-bottom:8px"><span style="color:var(--meli-green);font-weight:700">${q.avg.toFixed(2)}</span> — ${q.text}</div>`).join('')}
+      </div>
+      <div class="chart-section">
+        <h3>Bottom 3 - Oportunidades de mejora</h3>
+        ${bottom3.map(q => `<div style="margin-bottom:8px"><span style="color:var(--meli-red);font-weight:700">${q.avg.toFixed(2)}</span> — ${q.text}</div>`).join('')}
+      </div>
+    </div>
+
+    <div class="dist-grid">
+      <div class="dist-section">
+        <h3>Distribución - Engagement</h3>
+        ${distBars(engDist)}
+      </div>
+      <div class="dist-section">
+        <h3>Distribución - EXE</h3>
+        ${distBars(exeDist)}
+      </div>
+    </div>
+
+    ${comentarios.length ? `<div class="chart-section">
+      <h3>Comentarios (${comentarios.length})</h3>
+      ${comentarios.map(c => `<div class="comment-card">"${c}"</div>`).join('')}
+    </div>` : ''}
+  `;
+}
+
+let cachedResponses = [];
+
+async function loadData() {
+  const container = document.getElementById('dash-content');
+  container.innerHTML = '<div class="loading">Cargando respuestas...</div>';
+
+  try {
+    const res = await fetch(API_URL);
+    cachedResponses = await res.json();
+    renderDashboard(cachedResponses);
+  } catch (err) {
+    container.innerHTML = '<div class="no-data"><h3>Error al cargar datos</h3><p>' + err.message + '</p></div>';
+  }
+}
+
+function exportCSV() {
+  if (!cachedResponses.length) { alert('No hay datos para exportar.'); return; }
+  const allQs = [...QUESTIONS.engagement, ...QUESTIONS.exe];
+  const header = ['timestamp', ...allQs.map(q => q.id), 'comentario'].join(',');
+  const rows = cachedResponses.map(r => [
+    r.timestamp || '',
+    ...allQs.map(q => r[q.id] || ''),
+    `"${(r.comentario||'').toString().replace(/"/g,'""')}"`
+  ].join(','));
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], {type: 'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'encuesta_resultados.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+loadData();
+</script>
+</body>
+</html>
